@@ -1,0 +1,23 @@
+[
+  {
+    "id": "u111",
+    "role": "medecin",
+    "name": "Dr Dupont",
+    "email": "test3",
+    "password": ""
+  },
+  {
+    "id": "u222",
+    "role": "patient",
+    "name": "Jean Martin",
+    "email": "test1",
+    "password": ""
+  },
+  {
+    "id": "u333",
+    "role": "pharmacien",
+    "name": "Marie Curie",
+    "email": "test2",
+    "password": ""
+  }
+]

@@ -1,0 +1,17 @@
+[
+  {
+    "id": "ph001",
+    "nom": "Pharmacie Centrale",
+    "adresse": "123 Rue de la Santé, Ville"
+  },
+  {
+    "id": "ph002",
+    "nom": "Pharmacie du Bien-être",
+    "adresse": "456 Avenue des Médicaments, Ville"
+  },
+  {
+    "id": "ph003",
+    "nom": "Pharmacie Express",
+    "adresse": "789 Boulevard Rapide, Ville"
+  }
+]

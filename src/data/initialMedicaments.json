@@ -1,0 +1,16 @@
+[
+  {
+    "id": "m001",
+    "nom": "Doliprane",
+    "dosage": "500 mg",
+    "forme": "Comprimé",
+    "quantiteStock": 120
+  },
+  {
+    "id": "m002",
+    "nom": "Aspirine",
+    "dosage": "100 mg",
+    "forme": "Comprimé",
+    "quantiteStock": 200
+  }
+]

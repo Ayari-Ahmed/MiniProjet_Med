@@ -1,0 +1,15 @@
+[
+  {
+    "id": "o888",
+    "patientId": "p001",
+    "medecinId": "u111",
+    "medicaments": [
+      {
+        "idMedicament": "m001",
+        "quantiteParJour": 2,
+        "duree": 5
+      }
+    ],
+    "date": "2025-01-20"
+  }
+]

@@ -1,0 +1,30 @@
+[
+  {
+    "id": "m001",
+    "nom": "Doliprane",
+    "dosage": "500 mg",
+    "forme": "Comprimé",
+    "quantiteStock": 120
+  },
+  {
+    "id": "m002",
+    "nom": "Aspirine",
+    "dosage": "100 mg",
+    "forme": "Comprimé",
+    "quantiteStock": 200
+  },
+  {
+    "id": "m003",
+    "nom": "Ibuprofène",
+    "dosage": "200 mg",
+    "forme": "Comprimé",
+    "quantiteStock": 150
+  },
+  {
+    "id": "m004",
+    "nom": "Paracétamol",
+    "dosage": "500 mg",
+    "forme": "Sirop",
+    "quantiteStock": 80
+  }
+]
