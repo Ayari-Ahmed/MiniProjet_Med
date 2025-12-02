@@ -63,7 +63,6 @@ const PatientListScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Gestion des Patients</Text>
       <FlatList
         data={patients}
         renderItem={renderItem}

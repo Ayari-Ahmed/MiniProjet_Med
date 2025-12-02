@@ -49,7 +49,6 @@ const CommandeListScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Mes Commandes</Text>
       <FlatList
         data={commandes}
         renderItem={renderItem}

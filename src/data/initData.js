@@ -1,8 +1,9 @@
 import { getItem, saveItem } from '../api/asyncStorage';
 const users = require('./initialUsers.json');
 const patients = require('./initialPatients.json');
-const medicaments = require('./initialMedicaments.json');
+const medicaments = require('./medicamentPresetList.json');
 const ordonnances = require('./initialOrdonnances.json');
+const pharmacies = require('./pharmacieList.json');
 
 export const initializeData = async () => {
   // Check if users are already loaded
@@ -26,5 +27,13 @@ export const initializeData = async () => {
     await saveItem('ordonnances', ordonnances);
   }
 
-  // Commandes can be empty
+  const existingPharmacies = await getItem('pharmacies');
+  if (!existingPharmacies) {
+    await saveItem('pharmacies', pharmacies);
+  }
+
+  const existingCommandes = await getItem('commandes');
+  if (!existingCommandes) {
+    await saveItem('commandes', []);
+  }
 };

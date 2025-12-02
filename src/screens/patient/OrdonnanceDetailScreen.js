@@ -21,7 +21,6 @@ const OrdonnanceDetailScreen = ({ route, navigation }) => {
 
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.title}>Détail de l'Ordonnance</Text>
       <View style={styles.infoCard}>
         <Calendar size={20} color="#10B981" />
         <Text style={styles.infoText}>Date: {ordonnance.date}</Text>

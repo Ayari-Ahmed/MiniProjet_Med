@@ -31,7 +31,6 @@ const CommandeDetailScreen = ({ route, navigation }) => {
 
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.title}>Détail de la Commande</Text>
       <View style={styles.detailCard}>
         <View style={styles.detailRow}>
           <Hash size={20} color="#10B981" />

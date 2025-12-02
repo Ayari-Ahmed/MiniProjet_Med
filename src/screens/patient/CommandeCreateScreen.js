@@ -1,16 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, ScrollView } from 'react-native';
 import { MapPin, MessageSquare, ShoppingCart, Check } from 'lucide-react-native';
 import { useAuthStore } from '../../store/authStore';
 import { addCommande } from '../../api/commandeService';
-import pharmacies from '../../data/pharmacieList.json';
+import { getPharmacies } from '../../api/pharmacieService';
 
 const CommandeCreateScreen = ({ route, navigation }) => {
   const { ordonnance } = route.params;
   const { logout } = useAuthStore();
+  const [pharmacies, setPharmacies] = useState([]);
   const [selectedPharmacy, setSelectedPharmacy] = useState('');
   const [lieuLivraison, setLieuLivraison] = useState('');
   const [remarques, setRemarques] = useState('');
+
+  useEffect(() => {
+    const loadPharmacies = async () => {
+      const loadedPharmacies = await getPharmacies();
+      setPharmacies(loadedPharmacies);
+    };
+    loadPharmacies();
+  }, []);
 
   const handleCreate = async () => {
     if (!selectedPharmacy) {

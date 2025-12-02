@@ -18,7 +18,6 @@ const CommandeDetailScreen = ({ route }) => {
 
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.title}>Détail de la Commande</Text>
       <View style={styles.detailCard}>
         <View style={styles.detailRow}>
           <Text style={styles.label}>Status:</Text>

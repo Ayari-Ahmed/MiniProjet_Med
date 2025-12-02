@@ -34,7 +34,6 @@ const OrdonnanceListScreenMed = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Mes Ordonnances</Text>
       <FlatList
         data={ordonnances}
         renderItem={renderItem}

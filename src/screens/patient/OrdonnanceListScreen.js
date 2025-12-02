@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
-import { FileText, ChevronRight } from 'lucide-react-native';
+import { FileText, ChevronRight, ShoppingCart } from 'lucide-react-native';
 import { useAuthStore } from '../../store/authStore';
 import { getOrdonnances } from '../../api/ordonnanceService';
 import { getPatients } from '../../api/patientService';
@@ -13,7 +13,7 @@ const OrdonnanceListScreen = ({ navigation }) => {
     const loadOrdonnances = async () => {
       const allOrdonnances = await getOrdonnances();
       const patients = await getPatients();
-      const patient = patients.find(p => p.name === currentUser.name); // Simple match
+      const patient = patients.find(p => p.name === currentUser.name);
       if (patient) {
         const userOrdonnances = allOrdonnances.filter(o => o.patientId === patient.id);
         setOrdonnances(userOrdonnances);
@@ -38,7 +38,7 @@ const OrdonnanceListScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Mes Ordonnances</Text>
+      
       <FlatList
         data={ordonnances}
         renderItem={renderItem}
@@ -46,6 +46,13 @@ const OrdonnanceListScreen = ({ navigation }) => {
         contentContainerStyle={styles.list}
         ListEmptyComponent={<Text style={styles.empty}>Aucune ordonnance trouvée</Text>}
       />
+      <TouchableOpacity
+        style={styles.commandesButton}
+        onPress={() => navigation.navigate('CommandeList')}
+      >
+        <ShoppingCart size={20} color="#FFFFFF" style={styles.buttonIcon} />
+        <Text style={styles.commandesText}>Voir mes Commandes</Text>
+      </TouchableOpacity>
       <TouchableOpacity style={styles.logoutButton} onPress={logout}>
         <Text style={styles.logoutText}>Se déconnecter</Text>
       </TouchableOpacity>
@@ -103,6 +110,23 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#94A3B8',
     marginTop: 50,
+  },
+  commandesButton: {
+    backgroundColor: '#3B82F6',
+    padding: 16,
+    margin: 16,
+    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonIcon: {
+    marginRight: 8,
+  },
+  commandesText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
   },
   logoutButton: {
     backgroundColor: '#EF4444',
