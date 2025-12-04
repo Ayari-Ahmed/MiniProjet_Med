@@ -1,9 +1,11 @@
 import { getItem, saveItem } from "./asyncStorage";
+import patientsData from "../data/initialPatients.json";
 
 const PATIENT_KEY = "patients";
 
 export const getPatients = async () => {
-  return (await getItem(PATIENT_KEY)) || [];
+  // Always return fresh data from JSON for instant updates
+  return patientsData;
 };
 
 export const addPatient = async (patient) => {

@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, KeyboardAvoidingView, Platform, SafeAreaView, StatusBar } from 'react-native';
-import { Pill } from 'lucide-react-native';
+import { Pill, User, Shield, Stethoscope } from 'lucide-react-native';
 import { useAuthStore } from '../../store/authStore';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { resetData } from '../../data/initData';
 
 const LoginScreen = () => {
   const [email, setEmail] = useState('');
+  const [isFocused, setIsFocused] = useState(false);
   const login = useAuthStore((state) => state.login);
   const insets = useSafeAreaInsets();
 
@@ -22,56 +23,114 @@ const LoginScreen = () => {
   };
 
   const clearData = async () => {
-    await AsyncStorage.clear();
-    Alert.alert('Success', 'All data cleared. Please restart the app.');
+    await resetData();
+    Alert.alert('Success', 'Data reset to initial state. Please restart the app.');
+  };
+
+  const demoLogin = async (email) => {
+    setEmail(email);
+    const success = await login(email, '');
+    if (!success) {
+      Alert.alert('Error', 'Demo account login failed');
+    }
   };
 
   return (
-    <SafeAreaView style={[styles.container, { marginTop: insets.top, marginBottom: insets.bottom }]}>
-      <StatusBar barStyle="light-content" backgroundColor="#10B981" />
-      <View style={styles.background}>
-        <View style={styles.overlay}>
-          <KeyboardAvoidingView style={styles.keyboardContainer} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-            <View style={styles.content}>
-              <View style={styles.logoContainer}>
-                <View style={styles.logo}>
-                  <Pill size={36} color="#FFFFFF" />
-                </View>
-                <Text style={styles.appName}>MediCare</Text>
-                <Text style={styles.tagline}>Your Health, Our Priority</Text>
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <KeyboardAvoidingView 
+        style={styles.keyboardContainer} 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
+        <View style={styles.content}>
+          {/* Header Section */}
+          <View style={styles.header}>
+            <View style={styles.logoContainer}>
+              <View style={styles.logoGlow} />
+              <View style={styles.logo}>
+                <Pill size={32} color="#10B981" strokeWidth={2.5} />
               </View>
+            </View>
+            <Text style={styles.appName}>MediCare</Text>
+            <Text style={styles.subtitle}>Healthcare at your fingertips</Text>
+          </View>
 
-              <View style={styles.card}>
-                <Text style={styles.welcomeText}>Welcome Back</Text>
-                <Text style={styles.instructionText}>Enter your credentials to continue</Text>
+          {/* Main Content */}
+          <View style={styles.main}>
+            {/* Email Input Card */}
+            <View style={styles.inputCard}>
+              <Text style={styles.label}>Email Address</Text>
+              <View style={[styles.inputContainer, isFocused && styles.inputContainerFocused]}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="you@example.com"
+                  placeholderTextColor="#94A3B8"
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  returnKeyType="done"
+                  onSubmitEditing={handleLogin}
+                  onFocus={() => setIsFocused(true)}
+                  onBlur={() => setIsFocused(false)}
+                />
+              </View>
+              
+              <TouchableOpacity style={styles.signInButton} onPress={handleLogin}>
+                <Text style={styles.signInButtonText}>Sign In</Text>
+              </TouchableOpacity>
+            </View>
 
-                <View style={styles.inputContainer}>
-                  <Text style={styles.inputLabel}>Email Address</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="your.email@example.com"
-                    placeholderTextColor="#94A3B8"
-                    value={email}
-                    onChangeText={setEmail}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    returnKeyType="done"
-                    onSubmitEditing={handleLogin}
-                  />
-                </View>
-
-                <TouchableOpacity style={styles.primaryButton} onPress={handleLogin}>
-                  <Text style={styles.primaryButtonText}>Sign In</Text>
+            {/* Demo Section */}
+            <View style={styles.demoSection}>
+              <Text style={styles.demoTitle}>Quick Demo Access</Text>
+              
+              <View style={styles.demoGrid}>
+                <TouchableOpacity
+                  style={[styles.demoButton, styles.patientButton]}
+                  onPress={() => demoLogin('test1')}
+                  activeOpacity={0.7}
+                >
+                  <View style={[styles.demoIconWrapper, styles.patientIconBg]}>
+                    <User size={20} color="#3B82F6" strokeWidth={2.5} />
+                  </View>
+                  <Text style={styles.demoLabel}>Patient</Text>
+                  <Text style={styles.demoName}>Jean M.</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.secondaryButton} onPress={clearData}>
-                  <Text style={styles.secondaryButtonText}>Reset App Data</Text>
+                <TouchableOpacity
+                  style={[styles.demoButton, styles.pharmacistButton]}
+                  onPress={() => demoLogin('test2')}
+                  activeOpacity={0.7}
+                >
+                  <View style={[styles.demoIconWrapper, styles.pharmacistIconBg]}>
+                    <Shield size={20} color="#10B981" strokeWidth={2.5} />
+                  </View>
+                  <Text style={styles.demoLabel}>Pharmacist</Text>
+                  <Text style={styles.demoName}>Marie C.</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.demoButton, styles.doctorButton]}
+                  onPress={() => demoLogin('test3')}
+                  activeOpacity={0.7}
+                >
+                  <View style={[styles.demoIconWrapper, styles.doctorIconBg]}>
+                    <Stethoscope size={20} color="#8B5CF6" strokeWidth={2.5} />
+                  </View>
+                  <Text style={styles.demoLabel}>Doctor</Text>
+                  <Text style={styles.demoName}>Dr. Dupont</Text>
                 </TouchableOpacity>
               </View>
             </View>
-          </KeyboardAvoidingView>
+          </View>
+
+          {/* Footer */}
+          <TouchableOpacity onPress={clearData} style={styles.resetButton}>
+            <Text style={styles.resetText}>Reset App Data</Text>
+          </TouchableOpacity>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 };
@@ -79,171 +138,215 @@ const LoginScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  background: {
-    flex: 1,
-    backgroundColor: '#10B981',
-  },
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(16, 185, 129, 0.9)',
+    backgroundColor: '#FFFFFF',
   },
   keyboardContainer: {
     flex: 1,
   },
   content: {
     flex: 1,
-    justifyContent: 'center',
     paddingHorizontal: 24,
+    paddingTop: 32,
+    paddingBottom: 20,
+  },
+  header: {
+    alignItems: 'center',
+    paddingTop: 20,
+    paddingBottom: 32,
   },
   logoContainer: {
-    alignItems: 'center',
-    marginBottom: 40,
+    position: 'relative',
+    marginBottom: 16,
+  },
+  logoGlow: {
+    position: 'absolute',
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#10B981',
+    opacity: 0.15,
+    top: 0,
+    left: 0,
   },
   logo: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
-    shadowColor: '#000',
+    borderWidth: 2,
+    borderColor: '#10B981',
+    shadowColor: '#10B981',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
     elevation: 8,
-  },
-  logoText: {
-    fontSize: 36,
   },
   appName: {
     fontSize: 28,
-    fontWeight: '700',
-    color: '#FFFFFF',
+    fontWeight: '800',
+    color: '#0F172A',
+    letterSpacing: -0.5,
     marginBottom: 4,
   },
-  tagline: {
-    fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontWeight: '500',
-  },
-  card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    padding: 32,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
-    shadowRadius: 16,
-    elevation: 12,
-  },
-  welcomeText: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#0F172A',
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  instructionText: {
+  subtitle: {
     fontSize: 14,
     color: '#64748B',
-    textAlign: 'center',
-    marginBottom: 32,
     fontWeight: '500',
   },
-  inputContainer: {
-    marginBottom: 24,
+  main: {
+    flex: 1,
+    justifyContent: 'center',
   },
-  inputLabel: {
+  inputCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 24,
+    marginBottom: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+  },
+  label: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#374151',
-    marginBottom: 8,
+    color: '#334155',
+    marginBottom: 10,
+    letterSpacing: 0.2,
+  },
+  inputContainer: {
+    backgroundColor: '#F8FAFC',
+    borderWidth: 2,
+    borderColor: '#E2E8F0',
+    borderRadius: 14,
+    marginBottom: 16,
+    overflow: 'hidden',
+    transition: 'all 0.2s',
+  },
+  inputContainerFocused: {
+    borderColor: '#10B981',
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#10B981',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 2,
   },
   input: {
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    borderRadius: 12,
     paddingHorizontal: 16,
-    paddingVertical: 14,
+    paddingVertical: 15,
     fontSize: 16,
     color: '#0F172A',
     fontWeight: '500',
   },
-  primaryButton: {
+  signInButton: {
     backgroundColor: '#10B981',
-    borderRadius: 12,
+    borderRadius: 14,
     paddingVertical: 16,
     alignItems: 'center',
-    marginBottom: 12,
     shadowColor: '#10B981',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 12,
+    elevation: 6,
   },
-  primaryButtonText: {
+  signInButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '700',
+    letterSpacing: 0.5,
   },
-  secondaryButton: {
-    backgroundColor: 'transparent',
+  demoSection: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 20,
+    padding: 20,
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: 'center',
-    marginBottom: 32,
   },
-  secondaryButtonText: {
+  demoTitle: {
+    fontSize: 13,
+    fontWeight: '700',
     color: '#64748B',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#E2E8F0',
-  },
-  dividerText: {
-    paddingHorizontal: 16,
-    fontSize: 12,
-    color: '#64748B',
-    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: 16,
     textTransform: 'uppercase',
+    letterSpacing: 1,
   },
-  demoContainer: {
-    backgroundColor: '#F8FAFC',
-    borderRadius: 12,
-    padding: 16,
-  },
-  demoItem: {
+  demoGrid: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    gap: 12,
+  },
+  demoButton: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    paddingVertical: 18,
+    paddingHorizontal: 8,
     alignItems: 'center',
-    paddingVertical: 8,
+    borderWidth: 2,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  patientButton: {
+    borderColor: '#BFDBFE',
+  },
+  pharmacistButton: {
+    borderColor: '#BBF7D0',
+  },
+  doctorButton: {
+    borderColor: '#DDD6FE',
+  },
+  demoIconWrapper: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  patientIconBg: {
+    backgroundColor: '#EFF6FF',
+  },
+  pharmacistIconBg: {
+    backgroundColor: '#ECFDF5',
+  },
+  doctorIconBg: {
+    backgroundColor: '#F5F3FF',
   },
   demoLabel: {
-    fontSize: 14,
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#0F172A',
+    marginBottom: 2,
+  },
+  demoName: {
+    fontSize: 11,
     color: '#64748B',
     fontWeight: '600',
   },
-  demoValue: {
-    fontSize: 14,
-    color: '#0F172A',
-    fontWeight: '700',
-    backgroundColor: '#E2E8F0',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
+  resetButton: {
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  resetText: {
+    fontSize: 13,
+    color: '#94A3B8',
+    fontWeight: '600',
   },
 });
 

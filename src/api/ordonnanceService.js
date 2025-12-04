@@ -1,9 +1,11 @@
 import { getItem, saveItem } from "./asyncStorage";
+import ordonnancesData from "../data/initialOrdonnances.json";
 
 const ORDONNANCE_KEY = "ordonnances";
 
 export const getOrdonnances = async () => {
-  return (await getItem(ORDONNANCE_KEY)) || [];
+  // Always return fresh data from JSON for instant updates
+  return ordonnancesData;
 };
 
 export const addOrdonnance = async (ordonnance) => {

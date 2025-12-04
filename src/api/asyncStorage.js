@@ -25,3 +25,11 @@ export const removeItem = async (key) => {
     console.error("Erreur suppression", error);
   }
 };
+
+export const clearAll = async () => {
+  try {
+    await AsyncStorage.clear();
+  } catch (error) {
+    console.error("Erreur vidage AsyncStorage", error);
+  }
+};

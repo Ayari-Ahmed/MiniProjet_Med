@@ -1,9 +1,11 @@
 import { getItem, saveItem } from "./asyncStorage";
+import medicamentsData from "../data/initialMedicaments.json";
 
 const MEDICAMENT_KEY = "medicaments";
 
 export const getMedicaments = async () => {
-  return (await getItem(MEDICAMENT_KEY)) || [];
+  // Always return fresh data from JSON for instant updates
+  return medicamentsData;
 };
 
 export const addMedicament = async (medicament) => {
@@ -25,4 +27,9 @@ export const deleteMedicament = async (id) => {
   const newList = meds.filter((m) => m.id !== id);
   await saveItem(MEDICAMENT_KEY, newList);
   return newList;
+};
+
+export const getMedicamentById = async (id) => {
+  const meds = await getMedicaments();
+  return meds.find((m) => m.id === id);
 };

@@ -4,12 +4,7 @@ import { View, Text, ActivityIndicator, StyleSheet } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useAuthStore } from '../store/authStore';
 import LoginScreen from '../screens/auth/LoginScreen';
-import MedecinHomeScreen from '../screens/medecin/MedecinHomeScreen';
-import PatientListScreen from '../screens/medecin/PatientListScreen';
-import PatientFormScreen from '../screens/medecin/PatientFormScreen';
-import OrdonnanceListScreenMed from '../screens/medecin/OrdonnanceListScreen';
-import OrdonnanceFormScreen from '../screens/medecin/OrdonnanceFormScreen';
-import CommandeListScreenMed from '../screens/medecin/CommandeListScreen';
+import MedecinNavigator from './MedecinNavigator';
 import OrdonnanceListScreen from '../screens/patient/OrdonnanceListScreen';
 import OrdonnanceDetailScreen from '../screens/patient/OrdonnanceDetailScreen';
 import CommandeCreateScreen from '../screens/patient/CommandeCreateScreen';
@@ -77,14 +72,7 @@ const AppNavigator = () => {
             <Stack.Screen name="MedicamentForm" component={MedicamentFormScreen} options={{ title: 'Nouveau Médicament' }} />
           </>
         ) : currentUser.role === 'medecin' ? (
-          <>
-            <Stack.Screen name="MedecinHome" component={MedecinHomeScreen} options={{ title: 'Médecin' }} />
-            <Stack.Screen name="PatientList" component={PatientListScreen} options={{ title: 'Patients' }} />
-            <Stack.Screen name="PatientForm" component={PatientFormScreen} options={{ title: 'Nouveau Patient' }} />
-            <Stack.Screen name="OrdonnanceListMed" component={OrdonnanceListScreenMed} options={{ title: 'Ordonnances' }} />
-            <Stack.Screen name="OrdonnanceForm" component={OrdonnanceFormScreen} options={{ title: 'Nouvelle Ordonnance' }} />
-            <Stack.Screen name="CommandeListMed" component={CommandeListScreenMed} options={{ title: 'Commandes' }} />
-          </>
+          <Stack.Screen name="MedecinTabs" component={MedecinNavigator} options={{ headerShown: false }} />
         ) : (
           <Stack.Screen name="Login" component={LoginScreen} options={{ title: 'Login' }} />
         )}

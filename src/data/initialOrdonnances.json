@@ -8,6 +8,11 @@
         "idMedicament": "m001",
         "quantiteParJour": 2,
         "duree": 5
+      },
+      {
+        "idMedicament": "m002",
+        "quantiteParJour": 1,
+        "duree": 7
       }
     ],
     "date": "2025-01-20"

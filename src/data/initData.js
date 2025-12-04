@@ -1,39 +1,15 @@
-import { getItem, saveItem } from '../api/asyncStorage';
-const users = require('./initialUsers.json');
-const patients = require('./initialPatients.json');
-const medicaments = require('./medicamentPresetList.json');
-const ordonnances = require('./initialOrdonnances.json');
-const pharmacies = require('./pharmacieList.json');
+import { getItem, saveItem, clearAll } from '../api/asyncStorage';
 
 export const initializeData = async () => {
-  // Check if users are already loaded
-  const existingUsers = await getItem('users');
-  if (!existingUsers) {
-    await saveItem('users', users);
-  }
-
-  const existingPatients = await getItem('patients');
-  if (!existingPatients) {
-    await saveItem('patients', patients);
-  }
-
-  const existingMedicaments = await getItem('medicaments');
-  if (!existingMedicaments) {
-    await saveItem('medicaments', medicaments);
-  }
-
-  const existingOrdonnances = await getItem('ordonnances');
-  if (!existingOrdonnances) {
-    await saveItem('ordonnances', ordonnances);
-  }
-
-  const existingPharmacies = await getItem('pharmacies');
-  if (!existingPharmacies) {
-    await saveItem('pharmacies', pharmacies);
-  }
-
+  // Data is now loaded directly from JSON files for instant updates
+  // Only initialize commandes which are created at runtime
   const existingCommandes = await getItem('commandes');
   if (!existingCommandes) {
     await saveItem('commandes', []);
   }
+};
+
+export const resetData = async () => {
+  await clearAll();
+  await initializeData();
 };

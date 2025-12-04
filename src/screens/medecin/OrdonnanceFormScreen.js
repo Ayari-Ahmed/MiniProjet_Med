@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, ScrollView, FlatList } from 'react-native';
-import { FileText, Save } from 'lucide-react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, StatusBar } from 'react-native';
+import { FileText, Save, X, Plus, User, Pill, LogOut } from 'lucide-react-native';
 import { useAuthStore } from '../../store/authStore';
 import { addOrdonnance, updateOrdonnance } from '../../api/ordonnanceService';
 import { getPatients } from '../../api/patientService';
@@ -75,74 +75,155 @@ const OrdonnanceFormScreen = ({ route, navigation }) => {
     }
   };
 
-  const renderSelectedMedicament = ({ item }) => {
-    const med = medicaments.find(m => m.id === item.idMedicament);
-    return (
-      <View style={styles.selectedMed}>
-        <Text>{med?.nom}</Text>
-        <TouchableOpacity onPress={() => removeMedicament(item.idMedicament)}>
-          <Text style={styles.removeText}>Retirer</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  };
-
-  const renderMedicament = ({ item }) => (
-    <TouchableOpacity style={styles.medOption} onPress={() => addMedicament(item)}>
-      <Text>{item.nom} - {item.dosage}</Text>
-    </TouchableOpacity>
-  );
-
   return (
     <View style={styles.container}>
-      <View style={styles.titleContainer}>
-        <FileText size={24} color="#FFFFFF" />
-        <Text style={styles.title}>
-          {ordonnance ? 'Modifier Ordonnance' : 'Nouvelle Ordonnance'}
-        </Text>
+      <StatusBar barStyle="light-content" backgroundColor="#059669" />
+      
+      {/* Header */}
+      <View style={styles.header}>
+        <View style={styles.headerContent}>
+          <View style={styles.iconBadge}>
+            <FileText size={24} color="#10B981" strokeWidth={2.5} />
+          </View>
+          <View>
+            <Text style={styles.headerTitle}>
+              {ordonnance ? 'Modifier' : 'Nouvelle'}
+            </Text>
+            <Text style={styles.headerSubtitle}>Ordonnance</Text>
+          </View>
+        </View>
+        <TouchableOpacity style={styles.logoutButton} onPress={logout}>
+          <LogOut size={20} color="#FFFFFF" />
+        </TouchableOpacity>
       </View>
-      <View style={styles.form}>
-        <Text style={styles.label}>Patient</Text>
-        <View style={styles.picker}>
-          {patients.map(pat => (
-            <TouchableOpacity
-              key={pat.id}
-              style={[styles.patientOption, selectedPatient === pat.id && styles.selected]}
-              onPress={() => setSelectedPatient(pat.id)}
-            >
-              <Text style={[styles.patientText, selectedPatient === pat.id && styles.selectedText]}>
-                {pat.name}
-              </Text>
-            </TouchableOpacity>
-          ))}
+
+      <ScrollView 
+        style={styles.scrollView}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        {/* Patient Selection */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <User size={20} color="#10B981" strokeWidth={2.5} />
+            <Text style={styles.sectionTitle}>Sélectionner un patient</Text>
+          </View>
+          <View style={styles.optionsContainer}>
+            {patients.map(pat => (
+              <TouchableOpacity
+                key={pat.id}
+                style={[
+                  styles.optionCard,
+                  selectedPatient === pat.id && styles.optionCardSelected
+                ]}
+                onPress={() => setSelectedPatient(pat.id)}
+                activeOpacity={0.7}
+              >
+                <View style={styles.radioOuter}>
+                  {selectedPatient === pat.id && <View style={styles.radioInner} />}
+                </View>
+                <Text style={[
+                  styles.optionText,
+                  selectedPatient === pat.id && styles.optionTextSelected
+                ]}>
+                  {pat.name}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
 
-        <Text style={styles.label}>Médicaments sélectionnés</Text>
-        <FlatList
-          data={selectedMedicaments}
-          renderItem={renderSelectedMedicament}
-          keyExtractor={(item) => item.idMedicament}
-          scrollEnabled={false}
-        />
+        {/* Selected Medications */}
+        {selectedMedicaments.length > 0 && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Pill size={20} color="#10B981" strokeWidth={2.5} />
+              <Text style={styles.sectionTitle}>Médicaments prescrits ({selectedMedicaments.length})</Text>
+            </View>
+            <View style={styles.selectedMedsContainer}>
+              {selectedMedicaments.map(item => {
+                const med = medicaments.find(m => m.id === item.idMedicament);
+                return (
+                  <View key={item.idMedicament} style={styles.selectedMedCard}>
+                    <View style={styles.medInfo}>
+                      <Text style={styles.medName}>{med?.nom}</Text>
+                      <Text style={styles.medDosage}>{med?.dosage}</Text>
+                    </View>
+                    <TouchableOpacity
+                      style={styles.removeButton}
+                      onPress={() => removeMedicament(item.idMedicament)}
+                      activeOpacity={0.7}
+                    >
+                      <X size={18} color="#EF4444" strokeWidth={2.5} />
+                    </TouchableOpacity>
+                  </View>
+                );
+              })}
+            </View>
+          </View>
+        )}
 
-        <Text style={styles.label}>Ajouter un médicament</Text>
-        <FlatList
-          data={medicaments}
-          renderItem={renderMedicament}
-          keyExtractor={(item) => item.id}
-          style={styles.medList}
-        />
+        {/* Available Medications */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Plus size={20} color="#10B981" strokeWidth={2.5} />
+            <Text style={styles.sectionTitle}>Ajouter des médicaments</Text>
+          </View>
+          <View style={styles.medsGrid}>
+            {medicaments.map(item => {
+              const isSelected = selectedMedicaments.some(m => m.idMedicament === item.id);
+              return (
+                <TouchableOpacity
+                  key={item.id}
+                  style={[
+                    styles.medCard,
+                    isSelected && styles.medCardDisabled
+                  ]}
+                  onPress={() => !isSelected && addMedicament(item)}
+                  activeOpacity={isSelected ? 1 : 0.7}
+                  disabled={isSelected}
+                >
+                  <View style={styles.medCardContent}>
+                    <Text style={[
+                      styles.medCardName,
+                      isSelected && styles.medCardTextDisabled
+                    ]}>
+                      {item.nom}
+                    </Text>
+                    <Text style={[
+                      styles.medCardDosage,
+                      isSelected && styles.medCardTextDisabled
+                    ]}>
+                      {item.dosage}
+                    </Text>
+                  </View>
+                  {isSelected && (
+                    <View style={styles.selectedBadge}>
+                      <Text style={styles.selectedBadgeText}>Ajouté</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </View>
 
-        <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-          <Save size={20} color="#FFFFFF" style={styles.buttonIcon} />
+        <View style={styles.bottomPadding} />
+      </ScrollView>
+
+      {/* Save Button */}
+      <View style={styles.saveContainer}>
+        <TouchableOpacity
+          style={styles.saveButton}
+          onPress={handleSave}
+          activeOpacity={0.8}
+        >
+          <Save size={22} color="#FFFFFF" strokeWidth={2.5} />
           <Text style={styles.saveButtonText}>
-            {ordonnance ? 'Modifier' : 'Créer'}
+            {ordonnance ? 'Modifier l\'ordonnance' : 'Créer l\'ordonnance'}
           </Text>
         </TouchableOpacity>
       </View>
-      <TouchableOpacity style={styles.logoutButton} onPress={logout}>
-        <Text style={styles.logoutText}>Se déconnecter</Text>
-      </TouchableOpacity>
     </View>
   );
 };
@@ -150,98 +231,240 @@ const OrdonnanceFormScreen = ({ route, navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F8FAFC',
   },
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 20,
+  header: {
     backgroundColor: '#10B981',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginLeft: 12,
-  },
-  form: {
-    padding: 20,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#2c3e50',
-    marginBottom: 10,
-    marginTop: 20,
-  },
-  picker: {
-    marginBottom: 20,
-  },
-  patientOption: {
-    backgroundColor: '#fff',
-    padding: 10,
-    borderRadius: 5,
-    marginBottom: 5,
-  },
-  selected: {
-    backgroundColor: '#3498db',
-  },
-  patientText: {
-    color: '#2c3e50',
-  },
-  selectedText: {
-    color: '#fff',
-  },
-  selectedMed: {
+    paddingTop: 20,
+    paddingBottom: 24,
+    paddingHorizontal: 20,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    backgroundColor: '#e8f5e8',
-    padding: 10,
-    borderRadius: 5,
-    marginBottom: 5,
+    alignItems: 'center',
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+    shadowColor: '#10B981',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
-  removeText: {
-    color: '#e74c3c',
-    fontWeight: 'bold',
+  headerContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
-  medList: {
-    maxHeight: 200,
+  iconBadge: {
+    backgroundColor: '#FFFFFF',
+    padding: 12,
+    borderRadius: 14,
   },
-  medOption: {
-    backgroundColor: '#fff',
-    padding: 10,
-    borderRadius: 5,
-    marginBottom: 5,
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    color: '#D1FAE5',
+    fontWeight: '500',
+  },
+  logoutButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    padding: 12,
+    borderRadius: 12,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: 20,
+  },
+  section: {
+    marginBottom: 24,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  optionsContainer: {
+    gap: 12,
+  },
+  optionCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    borderWidth: 2,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  optionCardSelected: {
+    borderColor: '#10B981',
+    backgroundColor: '#ECFDF5',
+  },
+  radioOuter: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#CBD5E1',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  radioInner: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#10B981',
+  },
+  optionText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#475569',
+    flex: 1,
+  },
+  optionTextSelected: {
+    color: '#059669',
+  },
+  selectedMedsContainer: {
+    gap: 10,
+  },
+  selectedMedCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  medInfo: {
+    flex: 1,
+  },
+  medName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#0F172A',
+    marginBottom: 2,
+  },
+  medDosage: {
+    fontSize: 13,
+    color: '#64748B',
+    fontWeight: '500',
+  },
+  removeButton: {
+    backgroundColor: '#FEE2E2',
+    padding: 8,
+    borderRadius: 8,
+  },
+  medsGrid: {
+    gap: 10,
+  },
+  medCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  medCardDisabled: {
+    backgroundColor: '#F8FAFC',
+    opacity: 0.6,
+  },
+  medCardContent: {
+    flex: 1,
+  },
+  medCardName: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#0F172A',
+    marginBottom: 2,
+  },
+  medCardDosage: {
+    fontSize: 13,
+    color: '#64748B',
+    fontWeight: '500',
+  },
+  medCardTextDisabled: {
+    color: '#94A3B8',
+  },
+  selectedBadge: {
+    backgroundColor: '#DBEAFE',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  selectedBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#1E40AF',
+  },
+  bottomPadding: {
+    height: 100,
+  },
+  saveContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#FFFFFF',
+    padding: 20,
+    paddingBottom: 24,
+    borderTopWidth: 1,
+    borderTopColor: '#F1F5F9',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 10,
   },
   saveButton: {
     backgroundColor: '#10B981',
-    padding: 16,
-    borderRadius: 8,
+    paddingVertical: 16,
+    borderRadius: 14,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 20,
-  },
-  buttonIcon: {
-    marginRight: 8,
+    gap: 10,
+    shadowColor: '#10B981',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
   },
   saveButtonText: {
     color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  logoutButton: {
-    backgroundColor: '#e74c3c',
-    padding: 15,
-    margin: 20,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  logoutText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 17,
+    fontWeight: '700',
+    letterSpacing: 0.3,
   },
 });
 

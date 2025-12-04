@@ -1,9 +1,11 @@
 import { getItem, saveItem } from "./asyncStorage";
+import usersData from "../data/initialUsers.json";
 
 const USER_KEY = "users";
 
 export const getUsers = async () => {
-  return (await getItem(USER_KEY)) || [];
+  // Always return fresh data from JSON for instant updates
+  return usersData;
 };
 
 export const addUser = async (user) => {
