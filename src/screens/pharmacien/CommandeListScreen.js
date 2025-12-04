@@ -4,6 +4,8 @@ import { ShoppingCart, Eye, Check, X, LogOut, Search, Filter } from 'lucide-reac
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuthStore } from '../../store/authStore';
 import { useCommandeStore } from '../../store/commandeStore';
+import { checkStockAvailability } from '../../api/pharmacyStockService';
+import { getOrdonnances } from '../../api/ordonnanceService';
 
 const CommandeListScreen = ({ navigation }) => {
   const { currentUser, logout } = useAuthStore();
@@ -21,6 +23,34 @@ const CommandeListScreen = ({ navigation }) => {
   );
 
   const handleStatusUpdate = async (id, newStatus) => {
+    // If changing to an active status, check stock availability first
+    if (newStatus === 'en_attente' || newStatus === 'en_preparation') {
+      const commande = commandes.find(c => c.id === id);
+      if (commande) {
+        const ordonnances = await getOrdonnances();
+        const ordonnance = ordonnances.find(o => o.id === commande.ordonnanceId);
+
+        if (ordonnance) {
+          // Check if all medicines are available
+          let stockSufficient = true;
+          for (const med of ordonnance.medicaments) {
+            const requiredQuantity = med.quantiteParJour * med.duree;
+            const isAvailable = await checkStockAvailability(currentUser.id, med.idMedicament || med.id, requiredQuantity);
+            if (!isAvailable) {
+              stockSufficient = false;
+              break;
+            }
+          }
+
+          if (!stockSufficient) {
+            // Cancel the order due to insufficient stock
+            await updateCommandeStatus(id, 'annule_stock_insuffisant');
+            return;
+          }
+        }
+      }
+    }
+
     await updateCommandeStatus(id, newStatus);
   };
 
