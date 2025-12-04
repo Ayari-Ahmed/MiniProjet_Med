@@ -4,8 +4,9 @@ import medicamentsData from "../data/initialMedicaments.json";
 const MEDICAMENT_KEY = "medicaments";
 
 export const getMedicaments = async () => {
-  // Always return fresh data from JSON for instant updates
-  return medicamentsData;
+  // Check asyncStorage first, fall back to JSON data if nothing stored
+  const stored = await getItem(MEDICAMENT_KEY);
+  return stored || medicamentsData;
 };
 
 export const addMedicament = async (medicament) => {

@@ -4,8 +4,8 @@ import patientsData from "../data/initialPatients.json";
 const PATIENT_KEY = "patients";
 
 export const getPatients = async () => {
-  // Always return fresh data from JSON for instant updates
-  return patientsData;
+  const saved = await getItem(PATIENT_KEY);
+  return saved || patientsData;
 };
 
 export const addPatient = async (patient) => {

@@ -1,64 +1,126 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
-import { ShoppingCart, ChevronRight } from 'lucide-react-native';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, StatusBar, Platform } from 'react-native';
+import { ShoppingCart, Eye, LogOut, Search, Filter } from 'lucide-react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { useAuthStore } from '../../store/authStore';
-import { getCommandes } from '../../api/commandeService';
-import { getPatients } from '../../api/patientService';
+import { useCommandeStore } from '../../store/commandeStore';
+import { usePatientStore } from '../../store/patientStore';
 
 const CommandeListScreen = ({ navigation }) => {
-  const [commandes, setCommandes] = useState([]);
   const { currentUser, logout } = useAuthStore();
+  const { commandes: allCommandes, loadCommandes } = useCommandeStore();
+  const { patients, loadPatients } = usePatientStore();
 
-  useEffect(() => {
-    const loadCommandes = async () => {
-      const allCommandes = await getCommandes();
-      const patients = await getPatients();
-      const patient = patients.find(p => p.name === currentUser.name);
-      if (patient) {
-        const userCommandes = allCommandes.filter(c => c.patientId === patient.id);
-        setCommandes(userCommandes);
-      }
-    };
-    loadCommandes();
-  }, [currentUser]);
+  const patient = useMemo(() =>
+    patients.find(p => p.name === currentUser?.name),
+    [patients, currentUser?.name]
+  );
+
+  const commandes = useMemo(() =>
+    patient ? allCommandes.filter(c => c.patientId === patient.id) : [],
+    [allCommandes, patient]
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      loadPatients();
+      loadCommandes();
+    }, [loadPatients, loadCommandes])
+  );
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'en_attente': return '#f39c12';
-      case 'en_preparation': return '#3498db';
-      case 'prete': return '#27ae60';
-      default: return '#95a5a6';
+      case 'en_attente': return '#F59E0B';
+      case 'en_preparation': return '#3B82F6';
+      case 'prete': return '#10B981';
+      case 'annule_stock_insuffisant': return '#EF4444';
+      default: return '#64748B';
+    }
+  };
+
+  const getStatusText = (status) => {
+    switch (status) {
+      case 'en_attente': return 'En attente';
+      case 'en_preparation': return 'En préparation';
+      case 'prete': return 'Prête';
+      case 'annule_stock_insuffisant': return 'Annulée - Stock insuffisant';
+      default: return status;
     }
   };
 
   const renderItem = ({ item }) => (
-    <TouchableOpacity
-      style={styles.card}
-      onPress={() => navigation.navigate('CommandeDetail', { commande: item })}
-    >
-      <ShoppingCart size={24} color="#10B981" style={styles.icon} />
-      <View style={styles.cardContent}>
-        <Text style={styles.cardTitle}>Commande du {item.dateCreation}</Text>
-        <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}>
-          <Text style={styles.statusText}>{item.status.replace('_', ' ')}</Text>
+    <View style={styles.commandeCard}>
+      <View style={styles.commandeCardLeft}>
+        <View style={styles.avatarContainer}>
+          <Text style={styles.avatarText}>C{item.id.slice(-2)}</Text>
+        </View>
+        <View style={styles.commandeInfo}>
+          <Text style={styles.commandeName}>Commande #{item.id.slice(-4)}</Text>
+          <View style={styles.commandeMeta}>
+            <View style={styles.metaBadge}>
+              <Text style={styles.metaText}>{item.dateCreation}</Text>
+            </View>
+            <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}>
+              <Text style={styles.statusText}>{getStatusText(item.status)}</Text>
+            </View>
+          </View>
+          <Text style={styles.commandePharmacy}>Pharmacie: {item.pharmacieId}</Text>
         </View>
       </View>
-      <ChevronRight size={24} color="#10B981" />
-    </TouchableOpacity>
+      <View style={styles.commandeActions}>
+        <TouchableOpacity
+          style={styles.viewButton}
+          onPress={() => navigation.navigate('CommandeDetail', { commande: item })}
+          activeOpacity={0.7}
+        >
+          <Eye size={18} color="#10B981" strokeWidth={2.5} />
+        </TouchableOpacity>
+      </View>
+    </View>
   );
 
   return (
     <View style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+
+      {/* Compact Header */}
+      <View style={styles.header}>
+        <View style={styles.headerLeft}>
+          <Text style={styles.headerTitle}>Mes Commandes</Text>
+          <View style={styles.countBadge}>
+            <Text style={styles.countText}>{commandes.length}</Text>
+          </View>
+        </View>
+        <View style={styles.headerRight}>
+          <TouchableOpacity style={styles.headerIconButton} activeOpacity={0.7}>
+            <Search size={20} color="#64748B" strokeWidth={2.5} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.headerIconButton} activeOpacity={0.7}>
+            <Filter size={20} color="#64748B" strokeWidth={2.5} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.logoutButton} onPress={logout} activeOpacity={0.7}>
+            <LogOut size={18} color="#EF4444" strokeWidth={2.5} />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Commandes List */}
       <FlatList
         data={commandes}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.list}
-        ListEmptyComponent={<Text style={styles.empty}>Aucune commande trouvée</Text>}
+        contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <View style={styles.emptyIconCircle}>
+              <ShoppingCart size={48} color="#CBD5E1" strokeWidth={2} />
+            </View>
+            <Text style={styles.emptyTitle}>Aucune commande</Text>
+            <Text style={styles.emptyText}>Vos commandes apparaîtront ici</Text>
+          </View>
+        }
       />
-      <TouchableOpacity style={styles.logoutButton} onPress={logout}>
-        <Text style={styles.logoutText}>Se déconnecter</Text>
-      </TouchableOpacity>
     </View>
   );
 };
@@ -66,73 +128,189 @@ const CommandeListScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    textAlign: 'center',
-    padding: 20,
-    backgroundColor: '#10B981',
-  },
-  list: {
-    padding: 16,
-  },
-  card: {
     backgroundColor: '#F8FAFC',
+    marginTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+  },
+  header: {
+    backgroundColor: '#FFFFFF',
+    paddingTop: 16,
+    paddingBottom: 16,
+    paddingHorizontal: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  headerTitle: {
+    fontSize: 26,
+    fontWeight: '800',
+    color: '#0F172A',
+    letterSpacing: -0.5,
+  },
+  countBadge: {
+    backgroundColor: '#10B981',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
     borderRadius: 12,
+  },
+  countText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  headerIconButton: {
+    backgroundColor: '#F8FAFC',
+    padding: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  logoutButton: {
+    backgroundColor: '#FEF2F2',
+    padding: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#FECACA',
+  },
+  listContent: {
+    padding: 20,
+    paddingTop: 12,
+  },
+  commandeCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
     padding: 16,
     marginBottom: 12,
     flexDirection: 'row',
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
   },
-  icon: {
-    marginRight: 12,
-  },
-  cardContent: {
+  commandeCardLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
     flex: 1,
   },
-  cardTitle: {
+  avatarContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    backgroundColor: '#DBEAFE',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+    borderWidth: 2,
+    borderColor: '#BFDBFE',
+  },
+  avatarText: {
     fontSize: 16,
+    fontWeight: '800',
+    color: '#1E40AF',
+    letterSpacing: 0.5,
+  },
+  commandeInfo: {
+    flex: 1,
+  },
+  commandeName: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#0F172A',
+    marginBottom: 6,
+    letterSpacing: 0.2,
+  },
+  commandeMeta: {
+    flexDirection: 'row',
+    gap: 6,
+    marginBottom: 4,
+    flexWrap: 'wrap',
+  },
+  metaBadge: {
+    backgroundColor: '#F1F5F9',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  metaText: {
+    fontSize: 11,
     fontWeight: '600',
-    color: '#1E293B',
+    color: '#475569',
   },
   statusBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 15,
-    marginTop: 8,
-    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
   },
   statusText: {
+    fontSize: 11,
+    fontWeight: '700',
     color: '#FFFFFF',
+  },
+  commandePharmacy: {
     fontSize: 12,
-    fontWeight: '600',
-    textTransform: 'capitalize',
-  },
-  empty: {
-    textAlign: 'center',
-    fontSize: 16,
     color: '#94A3B8',
-    marginTop: 50,
+    fontWeight: '500',
+    marginTop: 2,
   },
-  logoutButton: {
-    backgroundColor: '#EF4444',
-    padding: 16,
-    margin: 16,
-    borderRadius: 8,
+  commandeActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  viewButton: {
+    backgroundColor: '#ECFDF5',
+    padding: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+  },
+  emptyContainer: {
     alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 80,
   },
-  logoutText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
+  emptyIconCircle: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#F1F5F9',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+    borderWidth: 3,
+    borderColor: '#E2E8F0',
+  },
+  emptyTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#334155',
+    marginBottom: 8,
+    letterSpacing: 0.3,
+  },
+  emptyText: {
+    fontSize: 14,
+    color: '#94A3B8',
+    fontWeight: '500',
+    marginBottom: 24,
   },
 });
 

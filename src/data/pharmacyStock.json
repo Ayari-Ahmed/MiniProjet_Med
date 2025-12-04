@@ -1,0 +1,32 @@
+[
+  {
+    "pharmacieId": "ph001",
+    "medicamentId": "m001",
+    "stock": 50
+  },
+  {
+    "pharmacieId": "ph001",
+    "medicamentId": "m002",
+    "stock": 75
+  },
+  {
+    "pharmacieId": "ph002",
+    "medicamentId": "m001",
+    "stock": 30
+  },
+  {
+    "pharmacieId": "ph002",
+    "medicamentId": "m002",
+    "stock": 100
+  },
+  {
+    "pharmacieId": "ph003",
+    "medicamentId": "m001",
+    "stock": 25
+  },
+  {
+    "pharmacieId": "ph003",
+    "medicamentId": "m002",
+    "stock": 60
+  }
+]

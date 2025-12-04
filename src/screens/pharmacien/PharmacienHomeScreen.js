@@ -1,37 +1,38 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, StatusBar, Dimensions, ScrollView, Platform } from 'react-native';
-import { Users, FileText, LogOut, Sparkles, TrendingUp, Clock } from 'lucide-react-native';
+import { Pill, ShoppingCart, LogOut, Sparkles, TrendingUp, Clock } from 'lucide-react-native';
 import { useAuthStore } from '../../store/authStore';
-import { usePatientStore } from '../../store/patientStore';
-import { useOrdonnanceStore } from '../../store/ordonnanceStore';
+import { useCommandeStore } from '../../store/commandeStore';
+import { useMedicamentStore } from '../../store/medicamentStore';
 
 const { width } = Dimensions.get('window');
 
-const MedecinHomeScreen = ({ navigation }) => {
+const PharmacienHomeScreen = ({ navigation }) => {
     const { currentUser, logout } = useAuthStore();
-    const { patients, loadPatients } = usePatientStore();
-    const { ordonnances: allOrdonnances, loadOrdonnances } = useOrdonnanceStore();
+    const { commandes: allCommandes, loadCommandes } = useCommandeStore();
+    const { medicaments, loadMedicaments } = useMedicamentStore();
 
-    const ordonnances = useMemo(() =>
-      allOrdonnances.filter(o => o.medecinId === currentUser?.id),
-      [allOrdonnances, currentUser?.id]
+    const commandes = useMemo(() =>
+      allCommandes.filter(c => c.pharmacieId === currentUser?.id),
+      [allCommandes, currentUser?.id]
     );
-   const [stats, setStats] = useState([
-     { label: 'Patients', value: '0', icon: Users, color: '#3B82F6' },
-     { label: 'Ordonnances', value: '0', icon: FileText, color: '#10B981' },
-   ]);
+
+    const [stats, setStats] = useState([
+      { label: 'Médicaments', value: '0', icon: Pill, color: '#10B981' },
+      { label: 'Commandes', value: '0', icon: ShoppingCart, color: '#3B82F6' },
+    ]);
 
   useEffect(() => {
-    loadPatients();
-    loadOrdonnances();
-  }, [loadPatients, loadOrdonnances]);
+    loadMedicaments();
+    loadCommandes();
+  }, [loadMedicaments, loadCommandes]);
 
   useEffect(() => {
     setStats([
-      { label: 'Patients', value: patients.length.toString(), icon: Users, color: '#3B82F6' },
-      { label: 'Ordonnances', value: ordonnances.length.toString(), icon: FileText, color: '#10B981' },
+      { label: 'Médicaments', value: medicaments.length.toString(), icon: Pill, color: '#10B981' },
+      { label: 'Commandes', value: commandes.length.toString(), icon: ShoppingCart, color: '#3B82F6' },
     ]);
-  }, [patients, ordonnances]);
+  }, [medicaments, commandes]);
 
   return (
     <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
@@ -43,8 +44,8 @@ const MedecinHomeScreen = ({ navigation }) => {
           <View style={styles.headerContent}>
             <View style={styles.headerTop}>
               <View>
-                <Text style={styles.greeting}>Welcome back</Text>
-                <Text style={styles.doctorName}>Dr. {currentUser?.name || 'Médecin'}</Text>
+                <Text style={styles.greeting}>Bienvenue</Text>
+                <Text style={styles.pharmacienName}>{currentUser?.name || 'Pharmacien'}</Text>
                 <View style={styles.statusBadge}>
                   <View style={styles.statusDot} />
                   <Text style={styles.statusText}>En ligne</Text>
@@ -81,21 +82,21 @@ const MedecinHomeScreen = ({ navigation }) => {
           <Text style={styles.sectionTitle}>Actions Rapides</Text>
         </View>
 
-        {/* Primary Action - Featured */}
+        {/* Primary Action - Commandes */}
         <TouchableOpacity
           style={styles.primaryCard}
-          onPress={() => navigation.navigate('Ordonnances')}
+          onPress={() => navigation.navigate('Commandes')}
           activeOpacity={0.9}
         >
           <View style={styles.primaryCardGlow} />
           <View style={styles.primaryCardContent}>
             <View style={styles.primaryLeft}>
               <View style={styles.primaryIconContainer}>
-                <FileText size={32} color="#FFFFFF" strokeWidth={2} />
+                <ShoppingCart size={32} color="#FFFFFF" strokeWidth={2} />
               </View>
               <View>
-                <Text style={styles.primaryTitle}>Ordonnances</Text>
-                <Text style={styles.primarySubtitle}>Créer et gérer vos prescriptions</Text>
+                <Text style={styles.primaryTitle}>Commandes</Text>
+                <Text style={styles.primarySubtitle}>Gérer les commandes clients</Text>
               </View>
             </View>
             <View style={styles.primaryArrow}>
@@ -104,20 +105,20 @@ const MedecinHomeScreen = ({ navigation }) => {
           </View>
         </TouchableOpacity>
 
-        {/* Secondary Actions */}
+        {/* Secondary Action - Médicaments */}
         <TouchableOpacity
           style={[styles.secondaryCard, styles.blueCard]}
-          onPress={() => navigation.navigate('Patients')}
+          onPress={() => navigation.navigate('Medicaments')}
           activeOpacity={0.9}
         >
           <View style={styles.secondaryTop}>
             <View style={styles.secondaryIcon}>
-              <Users size={24} color="#3B82F6" strokeWidth={2.5} />
+              <Pill size={24} color="#3B82F6" strokeWidth={2.5} />
             </View>
             <TrendingUp size={16} color="#3B82F680" strokeWidth={2} />
           </View>
-          <Text style={styles.secondaryTitle}>Patients</Text>
-          <Text style={styles.secondarySubtitle}>Dossiers médicaux</Text>
+          <Text style={styles.secondaryTitle}>Médicaments</Text>
+          <Text style={styles.secondarySubtitle}>Gestion du stock</Text>
           <View style={styles.secondaryFooter}>
             <Text style={styles.secondaryAction}>Gérer →</Text>
           </View>
@@ -130,7 +131,7 @@ const MedecinHomeScreen = ({ navigation }) => {
           </View>
           <Text style={styles.tipText}>
             <Text style={styles.tipBold}>Astuce: </Text>
-            Glissez pour accéder rapidement aux actions
+            Surveillez votre stock et traitez les commandes rapidement
           </Text>
         </View>
       </View>
@@ -146,7 +147,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: 20, // Account for tab bar height
+    paddingBottom: 20,
   },
   headerContainer: {
     paddingBottom: 40,
@@ -179,7 +180,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     textTransform: 'uppercase',
   },
-  doctorName: {
+  pharmacienName: {
     fontSize: 32,
     fontWeight: '800',
     color: '#0F172A',
@@ -350,11 +351,6 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#DBEAFE',
   },
-  orangeCard: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 2,
-    borderColor: '#FEF3C7',
-  },
   secondaryTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -416,4 +412,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default MedecinHomeScreen;
+export default PharmacienHomeScreen;

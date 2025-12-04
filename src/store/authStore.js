@@ -34,5 +34,21 @@ export const useAuthStore = create((set, get) => ({
   logout: async () => {
     await saveItem(CURRENT_USER_KEY, null);
     set({ currentUser: null });
+  },
+
+  updateUser: async (userId, updates) => {
+    const users = await getUsers();
+    const updatedUsers = users.map(user =>
+      user.id === userId ? { ...user, ...updates } : user
+    );
+    await saveItem('users', updatedUsers);
+
+    // Update current user if it's the one being updated
+    const currentUser = get().currentUser;
+    if (currentUser && currentUser.id === userId) {
+      const updatedUser = { ...currentUser, ...updates };
+      await saveItem(CURRENT_USER_KEY, updatedUser);
+      set({ currentUser: updatedUser });
+    }
   }
 }));

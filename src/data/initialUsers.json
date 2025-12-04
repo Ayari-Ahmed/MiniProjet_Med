@@ -2,22 +2,28 @@
   {
     "id": "u111",
     "role": "medecin",
-    "name": "Dr Dupont",
+    "name": "Mohamed Ben Ali",
     "email": "test3",
-    "password": ""
+    "password": "",
+    "telephone": "+216 50 123 456",
+    "adresse": "Avenue Habib Bourguiba, Tunis"
   },
   {
-    "id": "u222",
+    "id": "p001",
     "role": "patient",
-    "name": "Jean Martin",
+    "name": "Ahmed Ben Salah",
     "email": "test1",
-    "password": ""
+    "password": "",
+    "telephone": "+216 51 987 654",
+    "adresse": "Rue de la Kasbah, Tunis"
   },
   {
-    "id": "u333",
+    "id": "ph001",
     "role": "pharmacien",
-    "name": "Marie Curie",
+    "name": "Fatma Mansouri",
     "email": "test2",
-    "password": ""
+    "password": "",
+    "telephone": "+216 52 555 444",
+    "adresse": "Avenue de France, Sfax"
   }
 ]

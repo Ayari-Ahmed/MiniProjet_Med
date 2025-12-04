@@ -4,8 +4,8 @@ import ordonnancesData from "../data/initialOrdonnances.json";
 const ORDONNANCE_KEY = "ordonnances";
 
 export const getOrdonnances = async () => {
-  // Always return fresh data from JSON for instant updates
-  return ordonnancesData;
+  const saved = await getItem(ORDONNANCE_KEY);
+  return saved || ordonnancesData;
 };
 
 export const addOrdonnance = async (ordonnance) => {
@@ -18,6 +18,22 @@ export const addOrdonnance = async (ordonnance) => {
 export const updateOrdonnance = async (id, updated) => {
   const ords = await getOrdonnances();
   const newList = ords.map((o) => (o.id === id ? { ...o, ...updated } : o));
+  await saveItem(ORDONNANCE_KEY, newList);
+  return newList;
+};
+
+export const updateOrdonnanceStatus = async (id, status) => {
+  const ords = await getOrdonnances();
+  const newList = ords.map((o) =>
+    o.id === id ? { ...o, status } : o
+  );
+  await saveItem(ORDONNANCE_KEY, newList);
+  return newList;
+};
+
+export const deleteOrdonnance = async (id) => {
+  const ords = await getOrdonnances();
+  const newList = ords.filter((o) => o.id !== id);
   await saveItem(ORDONNANCE_KEY, newList);
   return newList;
 };

@@ -2,16 +2,16 @@
   {
     "id": "ph001",
     "nom": "Pharmacie Centrale",
-    "adresse": "123 Rue de la Santé, Ville"
+    "adresse": "Avenue Habib Bourguiba, Tunis"
   },
   {
     "id": "ph002",
     "nom": "Pharmacie du Bien-être",
-    "adresse": "456 Avenue des Médicaments, Ville"
+    "adresse": "Rue de la Kasbah, Tunis"
   },
   {
     "id": "ph003",
     "nom": "Pharmacie Express",
-    "adresse": "789 Boulevard Rapide, Ville"
+    "adresse": "Avenue de France, Sfax"
   }
 ]

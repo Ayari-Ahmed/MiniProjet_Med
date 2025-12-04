@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, StatusBar } from 'react-native';
-import { FileText, Save, X, Plus, User, Pill, LogOut } from 'lucide-react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView, StatusBar, Platform, TextInput } from 'react-native';
+import { FileText, Save, X, Plus, User, Pill, LogOut, ArrowLeft, Sparkles } from 'lucide-react-native';
 import { useAuthStore } from '../../store/authStore';
-import { addOrdonnance, updateOrdonnance } from '../../api/ordonnanceService';
+import { useOrdonnanceStore } from '../../store/ordonnanceStore';
 import { getPatients } from '../../api/patientService';
 import { getMedicaments } from '../../api/medicamentService';
 
 const OrdonnanceFormScreen = ({ route, navigation }) => {
   const { ordonnance } = route.params || {};
   const { currentUser, logout } = useAuthStore();
+  const { addOrdonnance, updateOrdonnance } = useOrdonnanceStore();
   const [patients, setPatients] = useState([]);
   const [medicaments, setMedicaments] = useState([]);
   const [selectedPatient, setSelectedPatient] = useState('');
@@ -42,6 +43,12 @@ const OrdonnanceFormScreen = ({ route, navigation }) => {
 
   const removeMedicament = (id) => {
     setSelectedMedicaments(selectedMedicaments.filter(m => m.idMedicament !== id));
+  };
+
+  const updateMedicamentDetails = (id, field, value) => {
+    setSelectedMedicaments(selectedMedicaments.map(m =>
+      m.idMedicament === id ? { ...m, [field]: field === 'quantiteParJour' ? parseInt(value) || 1 : parseInt(value) || 7 } : m
+    ));
   };
 
   const handleSave = async () => {
@@ -78,10 +85,13 @@ const OrdonnanceFormScreen = ({ route, navigation }) => {
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#059669" />
-      
+
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerContent}>
+          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+            <ArrowLeft size={24} color="#FFFFFF" strokeWidth={2.5} />
+          </TouchableOpacity>
           <View style={styles.iconBadge}>
             <FileText size={24} color="#10B981" strokeWidth={2.5} />
           </View>
@@ -97,7 +107,7 @@ const OrdonnanceFormScreen = ({ route, navigation }) => {
         </TouchableOpacity>
       </View>
 
-      <ScrollView 
+      <ScrollView
         style={styles.scrollView}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
@@ -148,6 +158,28 @@ const OrdonnanceFormScreen = ({ route, navigation }) => {
                     <View style={styles.medInfo}>
                       <Text style={styles.medName}>{med?.nom}</Text>
                       <Text style={styles.medDosage}>{med?.dosage}</Text>
+                      <View style={styles.detailsRow}>
+                        <View style={styles.detailInput}>
+                          <Text style={styles.detailLabel}>Quantité/jour</Text>
+                          <TextInput
+                            style={styles.detailTextInput}
+                            value={item.quantiteParJour.toString()}
+                            onChangeText={(value) => updateMedicamentDetails(item.idMedicament, 'quantiteParJour', value)}
+                            keyboardType="numeric"
+                            placeholder="1"
+                          />
+                        </View>
+                        <View style={styles.detailInput}>
+                          <Text style={styles.detailLabel}>Durée (jours)</Text>
+                          <TextInput
+                            style={styles.detailTextInput}
+                            value={item.duree.toString()}
+                            onChangeText={(value) => updateMedicamentDetails(item.idMedicament, 'duree', value)}
+                            keyboardType="numeric"
+                            placeholder="7"
+                          />
+                        </View>
+                      </View>
                     </View>
                     <TouchableOpacity
                       style={styles.removeButton}
@@ -232,6 +264,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F8FAFC',
+    marginTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
   header: {
     backgroundColor: '#10B981',
@@ -253,6 +286,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+  },
+  backButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    padding: 12,
+    borderRadius: 12,
+    marginRight: 8,
   },
   iconBadge: {
     backgroundColor: '#FFFFFF',
@@ -371,6 +410,29 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#64748B',
     fontWeight: '500',
+    marginBottom: 8,
+  },
+  detailsRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  detailInput: {
+    flex: 1,
+  },
+  detailLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 4,
+  },
+  detailTextInput: {
+    backgroundColor: '#F9FAFB',
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    borderRadius: 8,
+    padding: 8,
+    fontSize: 14,
+    color: '#0F172A',
   },
   removeButton: {
     backgroundColor: '#FEE2E2',

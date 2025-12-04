@@ -1,37 +1,54 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, StatusBar, Dimensions, ScrollView, Platform } from 'react-native';
-import { Users, FileText, LogOut, Sparkles, TrendingUp, Clock } from 'lucide-react-native';
+import { FileText, ShoppingCart, LogOut, Sparkles, TrendingUp } from 'lucide-react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { useAuthStore } from '../../store/authStore';
-import { usePatientStore } from '../../store/patientStore';
 import { useOrdonnanceStore } from '../../store/ordonnanceStore';
+import { useCommandeStore } from '../../store/commandeStore';
+import { usePatientStore } from '../../store/patientStore';
 
 const { width } = Dimensions.get('window');
 
-const MedecinHomeScreen = ({ navigation }) => {
+const PatientHomeScreen = ({ navigation }) => {
     const { currentUser, logout } = useAuthStore();
-    const { patients, loadPatients } = usePatientStore();
     const { ordonnances: allOrdonnances, loadOrdonnances } = useOrdonnanceStore();
+    const { commandes: allCommandes, loadCommandes } = useCommandeStore();
+    const { patients, loadPatients } = usePatientStore();
+
+    const patient = useMemo(() =>
+      patients.find(p => p.name === currentUser?.name),
+      [patients, currentUser?.name]
+    );
 
     const ordonnances = useMemo(() =>
-      allOrdonnances.filter(o => o.medecinId === currentUser?.id),
-      [allOrdonnances, currentUser?.id]
+      patient ? allOrdonnances.filter(o => o.patientId === patient.id) : [],
+      [allOrdonnances, patient]
     );
-   const [stats, setStats] = useState([
-     { label: 'Patients', value: '0', icon: Users, color: '#3B82F6' },
-     { label: 'Ordonnances', value: '0', icon: FileText, color: '#10B981' },
-   ]);
 
-  useEffect(() => {
-    loadPatients();
-    loadOrdonnances();
-  }, [loadPatients, loadOrdonnances]);
+    const commandes = useMemo(() =>
+      patient ? allCommandes.filter(c => c.patientId === patient.id) : [],
+      [allCommandes, patient]
+    );
+
+    const [stats, setStats] = useState([
+      { label: 'Ordonnances', value: '0', icon: FileText, color: '#10B981' },
+      { label: 'Commandes', value: '0', icon: ShoppingCart, color: '#3B82F6' },
+    ]);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadPatients();
+      loadOrdonnances();
+      loadCommandes();
+    }, [loadPatients, loadOrdonnances, loadCommandes])
+  );
 
   useEffect(() => {
     setStats([
-      { label: 'Patients', value: patients.length.toString(), icon: Users, color: '#3B82F6' },
       { label: 'Ordonnances', value: ordonnances.length.toString(), icon: FileText, color: '#10B981' },
+      { label: 'Commandes', value: commandes.length.toString(), icon: ShoppingCart, color: '#3B82F6' },
     ]);
-  }, [patients, ordonnances]);
+  }, [ordonnances, commandes]);
 
   return (
     <ScrollView style={styles.scrollView} contentContainerStyle={styles.scrollContent}>
@@ -43,11 +60,11 @@ const MedecinHomeScreen = ({ navigation }) => {
           <View style={styles.headerContent}>
             <View style={styles.headerTop}>
               <View>
-                <Text style={styles.greeting}>Welcome back</Text>
-                <Text style={styles.doctorName}>Dr. {currentUser?.name || 'Médecin'}</Text>
+                <Text style={styles.greeting}>Bienvenue</Text>
+                <Text style={styles.patientName}>{currentUser?.name || 'Patient'}</Text>
                 <View style={styles.statusBadge}>
                   <View style={styles.statusDot} />
-                  <Text style={styles.statusText}>En ligne</Text>
+                  <Text style={styles.statusText}>Connecté</Text>
                 </View>
               </View>
               <TouchableOpacity style={styles.logoutButton} onPress={logout}>
@@ -81,7 +98,7 @@ const MedecinHomeScreen = ({ navigation }) => {
           <Text style={styles.sectionTitle}>Actions Rapides</Text>
         </View>
 
-        {/* Primary Action - Featured */}
+        {/* Primary Action - Ordonnances */}
         <TouchableOpacity
           style={styles.primaryCard}
           onPress={() => navigation.navigate('Ordonnances')}
@@ -94,8 +111,8 @@ const MedecinHomeScreen = ({ navigation }) => {
                 <FileText size={32} color="#FFFFFF" strokeWidth={2} />
               </View>
               <View>
-                <Text style={styles.primaryTitle}>Ordonnances</Text>
-                <Text style={styles.primarySubtitle}>Créer et gérer vos prescriptions</Text>
+                <Text style={styles.primaryTitle}>Mes Ordonnances</Text>
+                <Text style={styles.primarySubtitle}>Consulter vos prescriptions</Text>
               </View>
             </View>
             <View style={styles.primaryArrow}>
@@ -104,22 +121,22 @@ const MedecinHomeScreen = ({ navigation }) => {
           </View>
         </TouchableOpacity>
 
-        {/* Secondary Actions */}
+        {/* Secondary Action - Commandes */}
         <TouchableOpacity
           style={[styles.secondaryCard, styles.blueCard]}
-          onPress={() => navigation.navigate('Patients')}
+          onPress={() => navigation.navigate('Commandes')}
           activeOpacity={0.9}
         >
           <View style={styles.secondaryTop}>
             <View style={styles.secondaryIcon}>
-              <Users size={24} color="#3B82F6" strokeWidth={2.5} />
+              <ShoppingCart size={24} color="#3B82F6" strokeWidth={2.5} />
             </View>
             <TrendingUp size={16} color="#3B82F680" strokeWidth={2} />
           </View>
-          <Text style={styles.secondaryTitle}>Patients</Text>
-          <Text style={styles.secondarySubtitle}>Dossiers médicaux</Text>
+          <Text style={styles.secondaryTitle}>Mes Commandes</Text>
+          <Text style={styles.secondarySubtitle}>Suivre vos achats</Text>
           <View style={styles.secondaryFooter}>
-            <Text style={styles.secondaryAction}>Gérer →</Text>
+            <Text style={styles.secondaryAction}>Voir →</Text>
           </View>
         </TouchableOpacity>
 
@@ -130,7 +147,7 @@ const MedecinHomeScreen = ({ navigation }) => {
           </View>
           <Text style={styles.tipText}>
             <Text style={styles.tipBold}>Astuce: </Text>
-            Glissez pour accéder rapidement aux actions
+            Utilisez la barre de navigation pour accéder rapidement à vos sections
           </Text>
         </View>
       </View>
@@ -179,7 +196,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     textTransform: 'uppercase',
   },
-  doctorName: {
+  patientName: {
     fontSize: 32,
     fontWeight: '800',
     color: '#0F172A',
@@ -350,11 +367,6 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#DBEAFE',
   },
-  orangeCard: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 2,
-    borderColor: '#FEF3C7',
-  },
   secondaryTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -416,4 +428,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default MedecinHomeScreen;
+export default PatientHomeScreen;

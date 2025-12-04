@@ -1,101 +1,150 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, StatusBar } from 'react-native';
-import { FileText, ChevronRight, Plus, Home, LogOut } from 'lucide-react-native';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, StatusBar, Platform, Alert } from 'react-native';
+import { FileText, Edit, Trash2, UserPlus, LogOut, Search, Filter } from 'lucide-react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { useAuthStore } from '../../store/authStore';
-import { getOrdonnances } from '../../api/ordonnanceService';
+import { useOrdonnanceStore } from '../../store/ordonnanceStore';
+import { usePatientStore } from '../../store/patientStore';
 
 const OrdonnanceListScreenMed = ({ navigation }) => {
-  const [ordonnances, setOrdonnances] = useState([]);
   const { currentUser, logout } = useAuthStore();
+  const { ordonnances: allOrdonnances, loadOrdonnances, deleteOrdonnance } = useOrdonnanceStore();
+  const { patients, loadPatients } = usePatientStore();
 
-  useEffect(() => {
-    const loadOrdonnances = async () => {
-      const allOrdonnances = await getOrdonnances();
-      const userOrdonnances = allOrdonnances.filter(o => o.medecinId === currentUser.id);
-      setOrdonnances(userOrdonnances);
-    };
-    loadOrdonnances();
-  }, [currentUser]);
+  const ordonnances = useMemo(() =>
+    allOrdonnances.filter(o => o.medecinId === currentUser?.id),
+    [allOrdonnances, currentUser?.id]
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      loadOrdonnances();
+      loadPatients();
+    }, [loadOrdonnances, loadPatients])
+  );
+
+  const handleDelete = (id) => {
+    Alert.alert(
+      'Confirmation',
+      'Supprimer cette ordonnance ?',
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Supprimer',
+          style: 'destructive',
+          onPress: async () => {
+            await deleteOrdonnance(id);
+          },
+        },
+      ]
+    );
+  };
 
   const renderItem = ({ item }) => (
-    <TouchableOpacity
-      style={styles.card}
-      onPress={() => navigation.navigate('OrdonnanceForm', { ordonnance: item })}
-      activeOpacity={0.7}
-    >
-      <View style={styles.iconContainer}>
-        <FileText size={28} color="#10B981" strokeWidth={2.5} />
-      </View>
-      <View style={styles.cardContent}>
-        <Text style={styles.cardTitle}>Ordonnance</Text>
-        <Text style={styles.dateText}>{item.date}</Text>
-        <View style={styles.infoRow}>
-          <View style={styles.infoBadge}>
-            <Text style={styles.infoBadgeText}>Patient: {item.patientId}</Text>
+    <View style={styles.ordonnanceCard}>
+      <View style={styles.ordonnanceCardLeft}>
+        <View style={styles.avatarContainer}>
+          <Text style={styles.avatarText}>Rx</Text>
+        </View>
+        <View style={styles.ordonnanceInfo}>
+          <Text style={styles.ordonnanceName}>Ordonnance #{item.id.slice(-4)}</Text>
+          <View style={styles.ordonnanceMeta}>
+            <View style={styles.metaBadge}>
+              <Text style={styles.metaText}>{item.date}</Text>
+            </View>
+            <View style={styles.metaBadge}>
+              <Text style={styles.metaText}>{item.medicaments.length} méd.</Text>
+            </View>
           </View>
-          <View style={[styles.infoBadge, styles.medBadge]}>
-            <Text style={styles.medBadgeText}>{item.medicaments.length} médicament(s)</Text>
-          </View>
+          <Text style={styles.ordonnancePatient}>Patient: {patients.find(p => p.id === item.patientId)?.name || item.patientId}</Text>
         </View>
       </View>
-      <ChevronRight size={24} color="#CBD5E1" />
-    </TouchableOpacity>
+      <View style={styles.ordonnanceActions}>
+        <TouchableOpacity
+          style={styles.editButton}
+          onPress={() => navigation.navigate('OrdonnanceForm', { ordonnance: item })}
+          activeOpacity={0.7}
+        >
+          <Edit size={18} color="#F59E0B" strokeWidth={2.5} />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.deleteButton}
+          onPress={() => handleDelete(item.id)}
+          activeOpacity={0.7}
+        >
+          <Trash2 size={18} color="#EF4444" strokeWidth={2.5} />
+        </TouchableOpacity>
+      </View>
+    </View>
   );
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#059669" />
-      
-      {/* Header */}
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+
+      {/* Compact Header */}
       <View style={styles.header}>
-        <View>
-          <Text style={styles.headerTitle}>Mes Ordonnances</Text>
-          <Text style={styles.headerSubtitle}>Dr. {currentUser?.name}</Text>
+        <View style={styles.headerLeft}>
+          <Text style={styles.headerTitle}>Ordonnances</Text>
+          <View style={styles.countBadge}>
+            <Text style={styles.countText}>{ordonnances.length}</Text>
+          </View>
         </View>
-        <TouchableOpacity style={styles.logoutButton} onPress={logout}>
-          <LogOut size={20} color="#FFFFFF" />
+        <View style={styles.headerRight}>
+          <TouchableOpacity style={styles.headerIconButton} activeOpacity={0.7}>
+            <Search size={20} color="#64748B" strokeWidth={2.5} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.headerIconButton} activeOpacity={0.7}>
+            <Filter size={20} color="#64748B" strokeWidth={2.5} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.logoutButton} onPress={logout} activeOpacity={0.7}>
+            <LogOut size={18} color="#EF4444" strokeWidth={2.5} />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      {/* Quick Add Button */}
+      <View style={styles.quickAddContainer}>
+        <TouchableOpacity
+          style={styles.quickAddButton}
+          onPress={() => navigation.navigate('OrdonnanceForm')}
+          activeOpacity={0.9}
+        >
+          <View style={styles.quickAddIcon}>
+            <UserPlus size={20} color="#FFFFFF" strokeWidth={2.5} />
+          </View>
+          <Text style={styles.quickAddText}>Nouvelle Ordonnance</Text>
+          <View style={styles.quickAddArrow}>
+            <Text style={styles.arrowText}>→</Text>
+          </View>
         </TouchableOpacity>
       </View>
 
-      {/* List */}
+      {/* Ordonnances List */}
       <FlatList
         data={ordonnances}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <FileText size={64} color="#E2E8F0" strokeWidth={1.5} />
+            <View style={styles.emptyIconCircle}>
+              <FileText size={48} color="#CBD5E1" strokeWidth={2} />
+            </View>
             <Text style={styles.emptyTitle}>Aucune ordonnance</Text>
-            <Text style={styles.emptySubtitle}>Créez votre première ordonnance</Text>
+            <Text style={styles.emptyText}>Ajoutez votre première ordonnance</Text>
+            <TouchableOpacity
+              style={styles.emptyButton}
+              onPress={() => navigation.navigate('OrdonnanceForm')}
+              activeOpacity={0.8}
+            >
+              <UserPlus size={18} color="#FFFFFF" strokeWidth={2.5} />
+              <Text style={styles.emptyButtonText}>Ajouter une ordonnance</Text>
+            </TouchableOpacity>
           </View>
         }
       />
-
-      {/* Bottom Navigation */}
-      <View style={styles.bottomNav}>
-        <TouchableOpacity
-          style={styles.homeButton}
-          onPress={() => navigation.navigate('MedecinHome')}
-          activeOpacity={0.7}
-        >
-          <Home size={22} color="#64748B" strokeWidth={2} />
-          <Text style={styles.homeButtonText}>Accueil</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={styles.addButton}
-          onPress={() => navigation.navigate('OrdonnanceForm')}
-          activeOpacity={0.8}
-        >
-          <View style={styles.addButtonInner}>
-            <Plus size={28} color="#FFFFFF" strokeWidth={3} />
-          </View>
-        </TouchableOpacity>
-
-        <View style={styles.placeholder} />
-      </View>
     </View>
   );
 };
@@ -104,173 +153,248 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F8FAFC',
+    marginTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
   header: {
-    backgroundColor: '#10B981',
-    paddingTop: 20,
-    paddingBottom: 24,
+    backgroundColor: '#FFFFFF',
+    paddingTop: 16,
+    paddingBottom: 16,
     paddingHorizontal: 20,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  headerTitle: {
+    fontSize: 26,
+    fontWeight: '800',
+    color: '#0F172A',
+    letterSpacing: -0.5,
+  },
+  countBadge: {
+    backgroundColor: '#10B981',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  countText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  headerRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  headerIconButton: {
+    backgroundColor: '#F8FAFC',
+    padding: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  logoutButton: {
+    backgroundColor: '#FEF2F2',
+    padding: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#FECACA',
+  },
+  quickAddContainer: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 8,
+  },
+  quickAddButton: {
+    backgroundColor: '#10B981',
+    borderRadius: 16,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
     shadowColor: '#10B981',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
-    elevation: 8,
+    elevation: 6,
   },
-  headerTitle: {
-    fontSize: 28,
+  quickAddIcon: {
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    padding: 10,
+    borderRadius: 12,
+    marginRight: 12,
+  },
+  quickAddText: {
+    fontSize: 16,
     fontWeight: '700',
     color: '#FFFFFF',
-    letterSpacing: 0.5,
+    flex: 1,
+    letterSpacing: 0.3,
   },
-  headerSubtitle: {
-    fontSize: 14,
-    color: '#D1FAE5',
-    marginTop: 4,
-    fontWeight: '500',
+  quickAddArrow: {
+    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  logoutButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    padding: 12,
-    borderRadius: 12,
+  arrowText: {
+    fontSize: 18,
+    color: '#FFFFFF',
+    fontWeight: '700',
   },
-  list: {
+  listContent: {
     padding: 20,
-    paddingBottom: 100,
+    paddingTop: 12,
   },
-  card: {
+  ordonnanceCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 18,
-    marginBottom: 16,
+    borderRadius: 18,
+    padding: 16,
+    marginBottom: 12,
     flexDirection: 'row',
     alignItems: 'center',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
-    shadowRadius: 12,
+    shadowRadius: 8,
     elevation: 3,
     borderWidth: 1,
     borderColor: '#F1F5F9',
   },
-  iconContainer: {
-    backgroundColor: '#D1FAE5',
-    padding: 14,
-    borderRadius: 14,
-    marginRight: 16,
-  },
-  cardContent: {
+  ordonnanceCardLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
     flex: 1,
   },
-  cardTitle: {
+  avatarContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    backgroundColor: '#DBEAFE',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+    borderWidth: 2,
+    borderColor: '#BFDBFE',
+  },
+  avatarText: {
     fontSize: 18,
+    fontWeight: '800',
+    color: '#1E40AF',
+    letterSpacing: 0.5,
+  },
+  ordonnanceInfo: {
+    flex: 1,
+  },
+  ordonnanceName: {
+    fontSize: 17,
     fontWeight: '700',
     color: '#0F172A',
-    marginBottom: 4,
+    marginBottom: 6,
+    letterSpacing: 0.2,
   },
-  dateText: {
-    fontSize: 14,
-    color: '#64748B',
-    marginBottom: 10,
-    fontWeight: '500',
-  },
-  infoRow: {
+  ordonnanceMeta: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 6,
+    marginBottom: 4,
     flexWrap: 'wrap',
   },
-  infoBadge: {
+  metaBadge: {
     backgroundColor: '#F1F5F9',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
   },
-  infoBadgeText: {
-    fontSize: 12,
+  metaText: {
+    fontSize: 11,
+    fontWeight: '600',
     color: '#475569',
-    fontWeight: '600',
   },
-  medBadge: {
-    backgroundColor: '#DBEAFE',
-  },
-  medBadgeText: {
+  ordonnancePatient: {
     fontSize: 12,
-    color: '#1E40AF',
-    fontWeight: '600',
+    color: '#94A3B8',
+    fontWeight: '500',
+    marginTop: 2,
+  },
+  ordonnanceActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  editButton: {
+    backgroundColor: '#FEF3C7',
+    padding: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+  },
+  deleteButton: {
+    backgroundColor: '#FEE2E2',
+    padding: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#FECACA',
   },
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 80,
   },
-  emptyTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#64748B',
-    marginTop: 16,
+  emptyIconCircle: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#F1F5F9',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+    borderWidth: 3,
+    borderColor: '#E2E8F0',
   },
-  emptySubtitle: {
+  emptyTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#334155',
+    marginBottom: 8,
+    letterSpacing: 0.3,
+  },
+  emptyText: {
     fontSize: 14,
     color: '#94A3B8',
-    marginTop: 8,
+    fontWeight: '500',
+    marginBottom: 24,
   },
-  bottomNav: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: '#FFFFFF',
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    paddingVertical: 12,
-    paddingBottom: 20,
-    borderTopWidth: 1,
-    borderTopColor: '#F1F5F9',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 10,
-  },
-  homeButton: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 8,
-  },
-  homeButtonText: {
-    fontSize: 12,
-    color: '#64748B',
-    marginTop: 4,
-    fontWeight: '600',
-  },
-  addButton: {
-    marginTop: -32,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  addButtonInner: {
+  emptyButton: {
     backgroundColor: '#10B981',
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: 8,
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    borderRadius: 14,
     shadowColor: '#10B981',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
+    shadowOpacity: 0.3,
     shadowRadius: 8,
-    elevation: 8,
-    borderWidth: 4,
-    borderColor: '#FFFFFF',
+    elevation: 6,
   },
-  placeholder: {
-    flex: 1,
+  emptyButtonText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    letterSpacing: 0.3,
   },
 });
 
