@@ -1,14 +1,52 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, StatusBar, Platform } from 'react-native';
-import { Hash, User, Calendar, MapPin, MessageSquare, CheckCircle, ArrowLeft, LogOut } from 'lucide-react-native';
+import { Hash, User, Calendar, MapPin, MessageSquare, CheckCircle, ArrowLeft, LogOut, FileText, Pill } from 'lucide-react-native';
 import { useAuthStore } from '../../store/authStore';
 import { useCommandeStore } from '../../store/commandeStore';
+import { getOrdonnances } from '../../api/ordonnanceService';
+import { getUsers } from '../../api/userService';
+import { getMedicaments } from '../../api/medicamentService';
 
 const CommandeDetailScreen = ({ route, navigation }) => {
   const { commande } = route.params;
   const { logout } = useAuthStore();
   const { updateCommandeStatus } = useCommandeStore();
   const [currentStatus, setCurrentStatus] = useState(commande.status);
+  const [ordonnance, setOrdonnance] = useState(null);
+  const [medecin, setMedecin] = useState(null);
+  const [patient, setPatient] = useState(null);
+  const [medicaments, setMedicaments] = useState([]);
+
+  useEffect(() => {
+    const loadDetails = async () => {
+      try {
+        // Load ordonnance
+        const ordonnances = await getOrdonnances();
+        const ord = ordonnances.find(o => o.id === commande.ordonnanceId);
+        setOrdonnance(ord);
+
+        if (ord) {
+          // Load users
+          const users = await getUsers();
+          const med = users.find(u => u.id === ord.medecinId);
+          setMedecin(med);
+          const pat = users.find(u => u.id === ord.patientId);
+          setPatient(pat);
+
+          // Load medicaments
+          const allMedicaments = await getMedicaments();
+          const meds = ord.medicaments.map(m => {
+            const medDetail = allMedicaments.find(med => med.id === m.idMedicament);
+            return { ...m, ...medDetail };
+          });
+          setMedicaments(meds);
+        }
+      } catch (error) {
+        console.error('Error loading details:', error);
+      }
+    };
+    loadDetails();
+  }, [commande]);
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -93,7 +131,7 @@ const CommandeDetailScreen = ({ route, navigation }) => {
             <View style={styles.detailRow}>
               <User size={20} color="#10B981" />
               <Text style={styles.label}>Patient:</Text>
-              <Text style={styles.value}>{commande.patientId}</Text>
+              <Text style={styles.value}>{patient ? patient.name : commande.patientId}</Text>
             </View>
             <View style={styles.detailRow}>
               <Calendar size={20} color="#10B981" />
@@ -119,6 +157,54 @@ const CommandeDetailScreen = ({ route, navigation }) => {
             </View>
           </View>
         </View>
+
+        {/* Prescription Details */}
+        {ordonnance && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <FileText size={20} color="#10B981" strokeWidth={2.5} />
+              <Text style={styles.sectionTitle}>Ordonnance</Text>
+            </View>
+
+            <View style={styles.prescriptionCard}>
+              <View style={styles.prescriptionRow}>
+                <Text style={styles.prescriptionLabel}>Médecin</Text>
+                <Text style={styles.prescriptionValue}>{medecin ? `Dr. ${medecin.name}` : ordonnance.medecinId}</Text>
+              </View>
+              <View style={styles.prescriptionDivider} />
+              <View style={styles.prescriptionRow}>
+                <Text style={styles.prescriptionLabel}>Date</Text>
+                <Text style={styles.prescriptionValue}>{ordonnance.date}</Text>
+              </View>
+            </View>
+          </View>
+        )}
+
+        {/* Medicines List */}
+        {medicaments.length > 0 && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Pill size={20} color="#10B981" strokeWidth={2.5} />
+              <Text style={styles.sectionTitle}>Médicaments</Text>
+            </View>
+
+            <View style={styles.medicinesList}>
+              {medicaments.map((med, index) => (
+                <View key={index} style={[styles.medicineItem, index === medicaments.length - 1 && styles.medicineItemLast]}>
+                  <View style={styles.medicineMain}>
+                    <Text style={styles.medicineTitle}>{med.nom || `Médicament ${index + 1}`}</Text>
+                    <Text style={styles.medicineDosage}>
+                      {med.quantiteParJour} × {med.duree} jrs
+                    </Text>
+                  </View>
+                  <Text style={styles.medicineDetail}>
+                    {med.quantiteParJour} comprimé{med.quantiteParJour > 1 ? 's' : ''} par jour pendant {med.duree} jour{med.duree > 1 ? 's' : ''}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
 
         {/* Status Update Section - Only show if not cancelled due to insufficient stock */}
         {currentStatus !== 'annule_stock_insuffisant' && (
@@ -338,6 +424,76 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     lineHeight: 20,
     textAlign: 'center',
+  },
+  prescriptionCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  prescriptionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  prescriptionLabel: {
+    fontSize: 14,
+    color: '#64748B',
+    fontWeight: '500',
+  },
+  prescriptionValue: {
+    fontSize: 16,
+    color: '#0F172A',
+    fontWeight: '600',
+  },
+  prescriptionDivider: {
+    height: 1,
+    backgroundColor: '#E2E8F0',
+    marginVertical: 8,
+  },
+  medicinesList: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    overflow: 'hidden',
+  },
+  medicineItem: {
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  medicineItemLast: {
+    borderBottomWidth: 0,
+  },
+  medicineMain: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  medicineTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#0F172A',
+    flex: 1,
+  },
+  medicineDosage: {
+    fontSize: 14,
+    color: '#10B981',
+    fontWeight: '600',
+    backgroundColor: '#F0FDF4',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  medicineDetail: {
+    fontSize: 14,
+    color: '#64748B',
+    fontWeight: '500',
+    lineHeight: 20,
   },
 });
 

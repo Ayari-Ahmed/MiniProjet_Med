@@ -76,10 +76,11 @@ const OrdonnanceDetailScreen = ({ route, navigation }) => {
                 <Text style={styles.caduceusSymbol}>⚕️</Text>
               </View>
               <View>
-                <Text style={styles.headerBandTitle}>ORDONNANCE MÉDICALE</Text>
+                <Text style={styles.headerBandTitle}>ORDONNANCE </Text>
                 <Text style={styles.headerBandSubtitle}>République Tunisienne</Text>
               </View>
             </View>
+            
             <View style={styles.prescriptionNumberBadge}>
               <Text style={styles.prescriptionNumberLabel}>N°</Text>
               <Text style={styles.prescriptionNumberValue}>
@@ -350,6 +351,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.3)',
+    marginRight: 25,
+    position: 'absolute',
+    right: 0,
   },
   prescriptionNumberLabel: {
     fontSize: 10,
